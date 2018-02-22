@@ -41,36 +41,41 @@ def max_pizza(pizza, min_ingredients, max_total):
 def random_cuts():
 	cursor = [0, 0]
 
-def cut_slice(pizza, cursor, cut_dimensions, min_ingredients):
+def cut_slice(pizza, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredients):
 	"""
 	A single slice is cut out of the array, and 0s are inserted(deletion)
 	"""
-	L = min_ingredients
 	pizza_buffer = pizza
-	cut_start, cut_end = cut_dimensions[0], cut_dimensions[1]
-	cut_length = cut_start[0] - cut_end[0]
-	cut_height = cut_start[1] - cut_end[1]
+	cut_length = cut_end[0] - cut_start[0] + 1
+	cut_height = cut_end[1] - cut_start[1] + 1
 	slice_buffer = []
-	point_x, point_y = cursor[0], cursor[1]
+	point_x, point_y = cut_start[0], cut_start[1]
 
+	#Items are added into the slice buffer from the selected range
 	for i in range(cut_length):
 		slice_buffer.append([])
 		for j in range(cut_height):
 			qq = pizza_buffer[point_x][point_y]
 			slice_buffer[i].append(qq)
 			point_y += 1
-		point_y = 0
+		point_y = cut_start[1]
 		point_x += 1
+	new_cursor = (cut_start[0], cut_end[1])
 
-	pizza_buffer = insert_zeroes(pizza_buffer, cut_start, cut_end)
-	#return cursor, pizza_buffer
+	#If the minimum number of ingredients exist, then slice is valid, we insert zeroes
+	if find_min_ingredients(slice_buffer, ingredient_a, min_ingredients) and \
+	find_min_ingredients(slice_buffer, ingredient_b, min_ingredients):
+		pizza_buffer = insert_zeroes(pizza_buffer, cut_start, cut_end)
+		return new_cursor, pizza_buffer, slice_buffer
+	else:
+		return None
 
-def find_ingredients(pizza, item, min_limit):
+def find_min_ingredients(grid, item, min_limit):
 	"""
 	Determines whether the minimum number of items in a 2D array are present
 	"""
 	find_count = 0
-	for i in pizza:
+	for i in grid:
 		for j in i:
 			if j == item:
 				find_count += 1
@@ -79,7 +84,6 @@ def find_ingredients(pizza, item, min_limit):
 	else:
 		return False
 
-
 def insert_zeroes(grid, start, end):
 	"""
 	Insert zeroes at a specific range in an array
@@ -87,8 +91,8 @@ def insert_zeroes(grid, start, end):
 	array = grid
 	start_x, start_y = start[0], start[1]	
 	end_x, end_y = end[0], end[1]
-	width = end_x - start_x
-	height = end_y - start_y 
+	width = end_x - start_x + 1
+	height = end_y - start_y + 1
 
 	for i in range(width):
 		for j in range(height):
@@ -127,16 +131,46 @@ class pizzaTests(unittest.TestCase):
 		self.assertEqual(g_set, q_n)
 
 	def test_insert_zeroes(self):
-		arr = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0]]
-		z_arr = [[1, 2, 3], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
-		r_arr = insert_zeroes(arr, (1, 0), (3, 3))
+		arr = [
+				 [1, 2, 3], 
+				 [4, 5, 6], 
+				 [7, 8, 9], 
+				 [0, 0, 0]]
+		z_arr = [
+				 [1, 2, 3], 
+				 [4, 5, 6], 
+				 [0, 0, 9], 
+				 [0, 0, 0]]
+		r_arr = insert_zeroes(arr, (2, 0), (3, 1))
 		self.assertEqual(r_arr, z_arr)
 
-	def test_find_ingredients(self):
+	def test_find_min_ingredients(self):
 		f_arr = [['a', 'b', 'c'],['a', 'g', 'f'],['a', 'a', 'b']]
-		self.assertEqual(find_ingredients(f_arr, 'a', 2), True)
+		self.assertEqual(find_min_ingredients(f_arr, 'a', 2), True)
 		g_arr = [['a', 'b', 'c'],['q', 'g', 'f'],['f', 'q', 'b']]
-		self.assertEqual(find_ingredients(g_arr, 'a', 2), False)
+		self.assertEqual(find_min_ingredients(g_arr, 'a', 2), False)
+		n_arr = [
+				 [1, 2, 3], 
+				 [4, 2, 6], 
+				 [5, 8, 9]]
+		self.assertEqual(find_min_ingredients(n_arr, 5, 1), True)
+
+	def test_cut_slice(self):
+		s_arr = [
+				 [1, 2, 3], 
+				 [4, 2, 6], 
+				 [5, 8, 9]]
+		r_arr = [
+				 [1, 2, 3],
+				 [0, 0, 6],
+				 [0, 0, 9]]
+		p_arr = [
+				 [4, 2],
+				 [5, 8]]
+		cursor, pizza, piece = cut_slice(s_arr, (1, 0), (2, 1), 2, 5, 1)
+		self.assertEqual(cursor, (1, 1))
+		self.assertEqual(pizza, r_arr)
+		self.assertEqual(p_arr, piece)
 
 if __name__ == '__main__':
 	unittest.main()
