@@ -41,18 +41,44 @@ def max_pizza(pizza, min_ingredients, max_total):
 def random_cuts():
 	cursor = [0, 0]
 
-def cut_slice(pizza, cursor, rect_size, min_ingredients):
+def cut_slice(pizza, cursor, cut_dimensions, min_ingredients):
 	"""
 	A single slice is cut out of the array, and 0s are inserted(deletion)
-
 	"""
 	L = min_ingredients
-
 	pizza_buffer = pizza
-	cut_size_x, cut_sizes_y = rect_size[0], rect_size[1]
+	cut_start, cut_end = cut_dimensions[0], cut_dimensions[1]
+	cut_length = cut_start[0] - cut_end[0]
+	cut_height = cut_start[1] - cut_end[1]
 	slice_buffer = []
+	point_x, point_y = cursor[0], cursor[1]
 
+	for i in range(cut_length):
+		slice_buffer.append([])
+		for j in range(cut_height):
+			qq = pizza_buffer[point_x][point_y]
+			slice_buffer[i].append(qq)
+			point_y += 1
+		point_y = 0
+		point_x += 1
+
+	pizza_buffer = insert_zeroes(pizza_buffer, cut_start, cut_end)
 	#return cursor, pizza_buffer
+
+def find_ingredients(pizza, item, min_limit):
+	"""
+	Determines whether the minimum number of items in a 2D array are present
+	"""
+	find_count = 0
+	for i in pizza:
+		for j in i:
+			if j == item:
+				find_count += 1
+	if find_count >= min_limit:
+		return True
+	else:
+		return False
+
 
 def insert_zeroes(grid, start, end):
 	"""
@@ -61,7 +87,6 @@ def insert_zeroes(grid, start, end):
 	array = grid
 	start_x, start_y = start[0], start[1]	
 	end_x, end_y = end[0], end[1]
-
 	width = end_x - start_x
 	height = end_y - start_y 
 
@@ -106,6 +131,12 @@ class pizzaTests(unittest.TestCase):
 		z_arr = [[1, 2, 3], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
 		r_arr = insert_zeroes(arr, (1, 0), (3, 3))
 		self.assertEqual(r_arr, z_arr)
+
+	def test_find_ingredients(self):
+		f_arr = [['a', 'b', 'c'],['a', 'g', 'f'],['a', 'a', 'b']]
+		self.assertEqual(find_ingredients(f_arr, 'a', 2), True)
+		g_arr = [['a', 'b', 'c'],['q', 'g', 'f'],['f', 'q', 'b']]
+		self.assertEqual(find_ingredients(g_arr, 'a', 2), False)
 
 if __name__ == '__main__':
 	unittest.main()
