@@ -46,8 +46,14 @@ def get_multiples_set(n):
 	div_set = []
 	multiples_set = []
 	q = 0
-	for i in range(n):
-		q + 1
+	for i in range(n/2):
+		q += 1
 		div_set.append(q)
 
 	for j in div_set:
+		if n % j == 0:
+			mult_a = j
+			mult_b = n / j
+			multiples_set.append((mult_a, mult_b))
+
+	return multiples_set
