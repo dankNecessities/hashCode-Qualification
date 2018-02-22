@@ -1,4 +1,4 @@
-import unittest
+import unittest, random
 
 T = True
 M = False
@@ -22,7 +22,7 @@ RULES:
 2) Minimum no of each ingredient per slice = L
 """
 
-def max_pizza(pizza, min_ingredients, max_total):
+def max_pizza_slices(pizza, min_ingredients, max_total):
 	"""
 	#Slicing algorithm
 	Intuitively;
@@ -38,8 +38,47 @@ def max_pizza(pizza, min_ingredients, max_total):
 	"""
 	cut_sizes = get_multiples_set(max_total)
 
-def random_cuts():
+def randomized_cuts(pizza, cuts_set, ingredient_a, ingredient_b, min_ingredients):
+	"""
+	Forms a list containing the coordinates of each cut made, in order
+	"""
+	pizza_buffer = pizza
+	cuts = cuts_set
 	cursor = [0, 0]
+	ordered_cuts = []
+	cut_fails = 0
+	while True:
+		#Shuffle the cutter shape
+		random.shuffle(cuts)
+		cut_size = cuts[0]
+		cut_start = cursor
+		cut_end = [cursor[0] + cut_size[0], cursor[1] + cut_size[1]]
+		#Prevent cuts outside the array range
+		try:
+			new_cursor, new_pizza, cut_piece = \
+			cut_slice(pizza_buffer, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredients)
+			if has_zero(cut_piece):
+				pass
+
+			cursor = new_cursor
+			pizza_buffer = new_pizza
+			ordered_cuts.append([cut_start, cut_end])
+			piece_size = cut_piece[0] * cut_piece[1]
+			if piece_size < min_ingredients:
+				break
+		except IndexError:
+			pass
+
+def has_zero(array):
+	"""
+	Returns True if a 0 is found within the array
+	"""
+	ans = False
+	for i in array:
+		for j in i:
+			if j == 0:
+				ans = True
+	return ans
 
 def cut_slice(pizza, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredients):
 	"""
@@ -171,6 +210,18 @@ class pizzaTests(unittest.TestCase):
 		self.assertEqual(cursor, (1, 1))
 		self.assertEqual(pizza, r_arr)
 		self.assertEqual(p_arr, piece)
+
+	def test_has_zero(self):
+		z_arr = [
+				 [4, 6, 8],
+				 [3, 4, 6],
+				 [1, 0, 8]]
+		p_arr = [
+				 [4, 6, 8],
+				 [3, 4, 6],
+				 [1, 9, 8]]
+		self.assertEqual(has_zero(z_arr), True)
+		self.assertEqual(has_zero(p_arr), False)
 
 if __name__ == '__main__':
 	unittest.main()
