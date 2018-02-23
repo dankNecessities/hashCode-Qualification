@@ -45,24 +45,45 @@ def randomized_cuts(pizza, cuts_set, ingredient_a, ingredient_b, min_ingredients
 	pizza_buffer = pizza
 	cuts = cuts_set
 	
-	#Cursor defines where the next cut will begin from
+	#Cursor starts at the beginning of the pizza array
 	cursor = [0, 0]
 	ordered_cuts = []
 	number_of_cuts = 0
+	smallest_heights = []
+	for i in cuts:
+		smallest_heights.append(min(i))
+
+	smallest_height = min(smallest_heights)
+
 	while True:
 		#Shuffle the cutter shape
+		print("SHUFFLE CUTS")
 		random.shuffle(cuts)
 		cut_size = cuts[0]
 		cut_start = cursor
 		cut_end = [cursor[0] + cut_size[0], cursor[1] + cut_size[1]]
-		print("SHUFFLE CUTS")
-		#Prevent cuts outside the array range
 		new_cursor, new_pizza, cut_piece = \
 		cut_slice(pizza_buffer, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredients)
+		
+		#If cut is out of range, try all possible cuts until one which fits in range is found
+		edge_tries = 0
+		while new_pizza == None and edge_tries < len(cuts):
+			for i in cuts:
+				cut_end = [cursor[0] + i[0], cursor[1] + i[1]]
+				new_cursor, new_pizza, cut_piece = \
+				cut_slice(pizza_buffer, cut_start, cut_end, ingredient_a, \
+				ingredient_b, min_ingredients)
+				edge_tries += 1
+
+		#If cut is still out of range, move cursor to beginning of next row
+		if new_pizza == None:
+			cursor = [new_cursor[0] + smallest_height, 0]
+
+		#####REACHED HERE	
 		print(cut_piece)
 		#Ignore cuts with 0s in them
 		if has_zero(cut_piece):
-			cursor = [new_cursor[0] + 1, 0]
+			cursor = [new_cursor[0] + smallest_height, 0]
 		else:
 			number_of_cuts += 1
 			print("Cut: {}".format(number_of_cuts))
@@ -72,16 +93,15 @@ def randomized_cuts(pizza, cuts_set, ingredient_a, ingredient_b, min_ingredients
 			if not find_min_ingredients(new_pizza):
 				number_of_cuts += 1
 				break
-		if new_pizza == None:
-			cursor = [cursor[0] + 1, 0]
-			if cursor[0] > len(pizza_buffer[0]):
-				break
+
 	return number_of_cuts, ordered_cuts
 
 def cut_slice(pizza, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredients):
 	"""
-	A single slice is cut out of the array, and 0s are inserted(deletion)
+	A single slice is cut out of the array, and if cut is valid 0s are inserted(deletion)
+	A valid cut contains the minimum number of ingredients
 	Cannot cut backwards, cut_start must be to the left of cut_end
+	Returns only the cursor point if cut is out of range
 	"""
 	pizza_buffer = pizza
 	cut_length = cut_end[0] - cut_start[0] + 1
@@ -119,11 +139,17 @@ def has_zero(array):
 	Returns True if a 0 is found within the array
 	"""
 	ans = False
+	z_x, z_y = 0, 0
+	zero_coord = None
 	for i in array:
 		for j in i:
 			if j == 0:
+				zero_coord = (z_x, z_y)
 				ans = True
-	return ans
+			z_y += 1
+		z_y = 0
+		z_x += 1
+	return ans, zero_coord
 
 def find_min_ingredients(grid, item, min_limit):
 	"""
@@ -241,8 +267,12 @@ class pizzaTests(unittest.TestCase):
 				 [4, 6, 8],
 				 [3, 4, 6],
 				 [1, 9, 8]]
-		self.assertEqual(has_zero(z_arr), True)
-		self.assertEqual(has_zero(p_arr), False)
+		answer, location = has_zero(z_arr)
+		answer2, location2 = has_zero(p_arr)
+		self.assertEqual(answer, True)
+		self.assertEqual(location, (2, 1))
+		self.assertEqual(answer2, False)
+		self.assertEqual(location2, None)
 
 	#def test_randomized_cuts(self):
 	#	test_pizza = [
