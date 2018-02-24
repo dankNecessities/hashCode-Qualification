@@ -20,11 +20,7 @@ test_pizza_2 = [
 RULES:
 1) Max no of total ingredients per slice = H
 2) Minimum no of each ingredient per slice = L
-"""
-
-def max_pizza_slices(pizza, min_ingredients, max_total):
-	"""
-	#Slicing algorithm
+#Slicing algorithm
 	Intuitively;
 		Cut a slice with max ingredients, must contain at least L of either ingredient
 			Slices vary in width and length
@@ -35,12 +31,63 @@ def max_pizza_slices(pizza, min_ingredients, max_total):
 		The remainder must contain at least one ingredient of each
 		Store results of no of slices for each cutting run
 		The smallest no of slices, with each of its cut coordinates is returned
+"""
+
+def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	"""
-	cut_sizes = get_multiples_set(max_total)
+	Stores a list of number of pizza cuts, coordinates of these cuts and the remainder after cutting
+	"""
+	unsliced_pizza = copy.deepcopy(pizza)
+
+	#run_length specifies the number of times a randomized_cut sequence is run, limits the stored data
+	run_length = 1000
+	cut_shapes = get_multiples_set(max_total)
+	unsorted_results = []
+	#Increase precision of cuts by including non-optimal slices
+	n = max_total
+	cut_shapes.append((int(n/2), 1))
+	cut_shapes.append((1, int(n/2)))
+	for i in range(run_length):
+		no_of_cuts, ordered_cuts, remainder = \
+		randomized_cuts(unsliced_pizza, cut_shapes, ingredient_a, ingredient_b, min_ingredients)
+		unsorted_results.append([no_of_cuts, ordered_cuts, remainder])
+		print("N")
+		print("N")
+		print("Run length: {}".format(i))
+		print("Run length: {}".format(i))
+		print("Run length: {}".format(i))
+		print("N")
+		print("N")
+	print(unsorted_results)
+
+	min_remainder = 10000000000000
+	min_results = []
+	#Find the lowest remainder for all the results
+	for i in unsorted_results:
+		tr = i[2]
+		if tr < min_remainder:
+			min_remainder = tr
+	#Put the results with the lowest remainder into a new set
+	print(min_remainder)
+	for i in unsorted_results:
+		tr = i[2]
+		if tr == min_remainder:
+			min_results.append(i)
+	print(min_results)
+	#Find the results with the fewest cuts
+	min_cuts = 10000000000000
+	for i in min_results:
+		tc = i[0]
+		if tc < min_cuts:
+			min_cuts = tc
+			optimum_cuts = i
+	print("Optimal Cuts: {}".format(optimum_cuts[0]))
+	print("Optimal Cuts Order: {}".format(optimum_cuts[1]))
 
 def randomized_cuts(pizza, cuts_set, ingredient_a, ingredient_b, min_ingredients):
 	"""
-	Returns the number of cuts for a given array, and the order in which the cuts were made
+	Returns the number of cuts for a given array, the order in which the cuts were made, and the 
+	remainder after performing the cuts
 	"""
 	pizza_buffer = copy.deepcopy(pizza)
 	cuts = copy.deepcopy(cuts_set)
@@ -380,6 +427,16 @@ class pizzaTests(unittest.TestCase):
 		print("No of cuts: {}".format(no_of_cuts))
 		print("Cuts order: {}".format(cuts_order))
 		print("Uncut items: {}".format(un_cuts))'''
+
+	def test_optimal_cuts(self):
+		test_pizza_2 = [
+			  [M, T, M, T, T],
+			  [T, M, T, M, T],
+			  [T, M, T, T, T],
+			  [M, T, T, M, M],
+			  [T, T, T, M, M],
+			  ]
+		optimal_cuts(test_pizza_2, 1, T, M, 6)
 
 if __name__ == '__main__':
 	unittest.main()
