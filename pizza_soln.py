@@ -1,7 +1,7 @@
-import unittest, random
+import unittest, random, copy
 
-T = True
-M = False
+T = 'T'
+M = 'M'
 test_pizza = [
 			  [T, T, T, T, T],
 			  [T, M, M, M, T],
@@ -42,68 +42,131 @@ def randomized_cuts(pizza, cuts_set, ingredient_a, ingredient_b, min_ingredients
 	"""
 	Returns the number of cuts for a given array, and the order in which the cuts were made
 	"""
-	pizza_buffer = pizza
-	cuts = cuts_set
-	
+	pizza_buffer = copy.deepcopy(pizza)
+	cuts = copy.deepcopy(cuts_set)
+
 	#Cursor starts at the beginning of the pizza array
-	cursor = [0, 0]
+	init_cursor = [0, 0]
 	ordered_cuts = []
 	number_of_cuts = 0
-	smallest_heights = []
-	for i in cuts:
-		smallest_heights.append(min(i))
+	zero_failure = 0
+	index_failure = 0
+	cursor = copy.deepcopy(init_cursor)
 
-	smallest_height = min(smallest_heights)
-
-	while True:
-		#Shuffle the cutter shape
-		print("SHUFFLE CUTS")
+	while number_of_cuts <= 10:
+		#Randomly select a shape for cutting
+		print("SHUFFLING CUTS")
 		random.shuffle(cuts)
 		cut_size = cuts[0]
-		cut_start = cursor
-		cut_end = [cursor[0] + cut_size[0], cursor[1] + cut_size[1]]
-		new_cursor, new_pizza, cut_piece = \
-		cut_slice(pizza_buffer, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredients)
-		
-		#If cut is out of range, try all possible cuts until one which fits in range is found
-		edge_tries = 0
-		while new_pizza == None and edge_tries < len(cuts):
-			for i in cuts:
-				cut_end = [cursor[0] + i[0], cursor[1] + i[1]]
-				new_cursor, new_pizza, cut_piece = \
-				cut_slice(pizza_buffer, cut_start, cut_end, ingredient_a, \
-				ingredient_b, min_ingredients)
-				edge_tries += 1
-
-		#If cut is still out of range, move cursor to beginning of next row
-		if new_pizza == None:
-			cursor = [new_cursor[0] + smallest_height, 0]
-
-		#####REACHED HERE	
-		print(cut_piece)
-		#Ignore cuts with 0s in them
-		if has_zero(cut_piece):
-			cursor = [new_cursor[0] + smallest_height, 0]
+		print("Cut shape: {}".format(cut_size))
+		#initialize the shape
+		print("STARTING")
+		print("Cursor position: {}".format(cursor))
+		cut_start = copy.deepcopy(cursor)
+		cut_end = [cursor[0] + cut_size[0] - 1, cursor[1] + cut_size[1] - 1]
+		print(pizza_buffer)
+		#Cut out a slice
+		new_cursor, new_pizza, cut_piece = cut_slice(pizza_buffer, cut_start, cut_end)
+		#For normal cuts which do not exceed range or contain zeroes, modify cursor and pizza
+		if not new_pizza == [[]]:
+			print("in range")
+			contains_zero, zero_location = has_zero(cut_piece)
+			if not contains_zero:
+				if find_ingredients(cut_piece, ingredient_a, min_ingredients) and \
+				find_ingredients(cut_piece, ingredient_b, min_ingredients):
+					#If the remainder does not have the required ingredients, then continue
+					if not find_ingredients(pizza_buffer, ingredient_a, min_ingredients) or \
+					not find_ingredients(pizza_buffer, ingredient_b, min_ingredients):
+						print("Minimum ingredients not in remainder! Continuing....")
+						break
+					#Otherwise, we save the cut
+					else:
+						cursor = [new_cursor[0], new_cursor[1] + 1]		
+						pizza_buffer = copy.deepcopy(new_pizza)
+						print("Removed piece: {}".format(cut_piece))
+						print("Remainder: {}".format(pizza_buffer))
+						number_of_cuts += 1
+						print("Cut: {}".format(number_of_cuts))
+						#Add the positions of the cut to the order list
+						ordered_cuts.append([cut_start, cut_end])
+						print("Cursor: {}".format(cursor))
+				else:
+					print("Minimum ingredients not in slice")
+			else:
+				#If a zero exists, we move the cursor to the right
+				print("Range cut contains zero")
+				cursor = [cut_start[0], cut_start[1] + 1]	
+				print("Cursor Shifted: {}".format(cursor))		
+		#If the cut is out of range we change the shape until we find one that fits
 		else:
-			number_of_cuts += 1
-			print("Cut: {}".format(number_of_cuts))
-			cursor = new_cursor
-			pizza_buffer = new_pizza
-			ordered_cuts.append([cut_start, cut_end])
-			if not find_min_ingredients(new_pizza):
-				number_of_cuts += 1
-				break
+			print("Out of range")
+			print("Cursor OR: {}".format(cursor))		
+			for i in cuts:
+				print("Trying cut {}".format(i))
+				cut_end = [cursor[0] + i[0] - 1, cursor[1] + i[1] - 1]
+				temp_new_cursor, temp_new_pizza, temp_cut_piece = \
+				cut_slice(pizza_buffer, cut_start, cut_end)
+				#if a cut is found in range, we check for zeroes
+				if not temp_new_pizza == [[]]:
+					print("Found cut")
+					contains_zero, zero_location = has_zero(temp_cut_piece)
+					#if a zero is found, we we move the cursor to the start of a new line
+					if contains_zero:
+						print("Cursor shift: cut contains zero")
+						cursor = [cut_start[0], cut_start[1] + 1]
+					#If not, we count it as a normal cut
+					else:
+						if find_ingredients(temp_cut_piece, ingredient_a, min_ingredients) and \
+						find_ingredients(temp_cut_piece, ingredient_b, min_ingredients):
+							#If the remainder does not have the required ingredients, then stop
+							if not find_ingredients(pizza_buffer, ingredient_a, min_ingredients) or \
+							not find_ingredients(pizza_buffer, ingredient_b, min_ingredients):
+								print("Minimum ingredients not in remainder! Continuing....")
+								break
+							else:
+								cursor = [temp_new_cursor[0], temp_new_cursor[1] + 1]		
+								pizza_buffer = copy.deepcopy(temp_new_pizza)
+								print("Removed piece: {}".format(temp_cut_piece))
+								print("Remainder: {}".format(pizza_buffer))
+								number_of_cuts += 1
+								print("Cut: {}".format(number_of_cuts))
+								#Add the positions of the cut to the order list
+								ordered_cuts.append([cut_start, cut_end])
+						#If the slice does not contain the minimum ingredients, then we shift the cursor
+						else:
+							print("Cursor shift: minimum ingredients not in slice")
+							cursor = [cut_start[0], cut_start[1] + 1]
+					break
 
-	return number_of_cuts, ordered_cuts
+			#if no cut was found within range, we move the cursor to the start of a new line
+			if temp_new_pizza == [[]]:
+				print("No cut within range")
+				cursor = [new_cursor[0] + 1, 0]
 
-def cut_slice(pizza, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredients):
+		#####REACHED HERE'''
+
+		#If the remainder does not have the required ingredients, then stop
+		if not find_ingredients(pizza_buffer, ingredient_a, min_ingredients) or \
+		not find_ingredients(pizza_buffer, ingredient_b, min_ingredients):
+			print("Minimum ingredients not in remainder! Exiting....")
+			break
+
+		#When the cursor moves completely out of the pizza range, the run stops
+		if cursor[0] > len(pizza_buffer):
+			#cursor = [cursor[0] - 1, cursor[1]]
+			print("Cursor Overflow. Exiting....")
+			break
+		
+	cuts_remainder = count_remainder(pizza_buffer)
+	return number_of_cuts, ordered_cuts, cuts_remainder
+
+def cut_slice(pizza, cut_start, cut_end):
 	"""
-	A single slice is cut out of the array, and if cut is valid 0s are inserted(deletion)
-	A valid cut contains the minimum number of ingredients
+	A single slice is cut out of the array, and 0s are inserted(deletion)
 	Cannot cut backwards, cut_start must be to the left of cut_end
-	Returns only the cursor point if cut is out of range
+	Returns the cursor point and an empty slice if cut is out of range
 	"""
-	pizza_buffer = pizza
+	pizza_buffer = copy.deepcopy(pizza)
 	cut_length = cut_end[0] - cut_start[0] + 1
 	cut_height = cut_end[1] - cut_start[1] + 1
 	slice_buffer = []
@@ -111,7 +174,6 @@ def cut_slice(pizza, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredi
 
 	#Items are added into the slice buffer from the selected range
 	try:
-	#If a cut is invalid, return None	
 		for i in range(cut_length):
 			slice_buffer.append([])
 			for j in range(cut_height):
@@ -121,22 +183,17 @@ def cut_slice(pizza, cut_start, cut_end, ingredient_a, ingredient_b, min_ingredi
 			point_y = cut_start[1]
 			point_x += 1
 		new_cursor = (cut_start[0], cut_end[1])
-	except IndexError:
-	#If the cut exceeds the array size, return the cursor point and None	
-		cursor = cut_start
-		return cursor, None, None
-
-	#If the minimum number of ingredients exist, then slice is valid, we insert zeroes
-	if find_min_ingredients(slice_buffer, ingredient_a, min_ingredients) and \
-	find_min_ingredients(slice_buffer, ingredient_b, min_ingredients):
 		pizza_buffer = insert_zeroes(pizza_buffer, cut_start, cut_end)
-		return new_cursor, pizza_buffer, slice_buffer
-	else:
-		return None, None, None
+		return copy.deepcopy(new_cursor), copy.deepcopy(pizza_buffer), copy.deepcopy(slice_buffer)
+	except IndexError:
+	#If the cut exceeds the array size, return the initial cursor point and None	
+		cursor = cut_start
+		return copy.deepcopy(cursor), [[]], [[]]
 
 def has_zero(array):
 	"""
 	Returns True if a 0 is found within the array
+	Returns the location of the last zero found
 	"""
 	ans = False
 	z_x, z_y = 0, 0
@@ -151,7 +208,7 @@ def has_zero(array):
 		z_x += 1
 	return ans, zero_coord
 
-def find_min_ingredients(grid, item, min_limit):
+def find_ingredients(grid, item, min_limit):
 	"""
 	Determines whether the minimum number of items in a 2D array are present
 	"""
@@ -169,7 +226,7 @@ def insert_zeroes(grid, start, end):
 	"""
 	Insert zeroes at a specific range in an array
 	"""
-	array = grid
+	array = copy.deepcopy(grid)
 	start_x, start_y = start[0], start[1]	
 	end_x, end_y = end[0], end[1]
 	width = end_x - start_x + 1
@@ -203,6 +260,17 @@ def get_multiples_set(n):
 
 	return multiples_set
 
+def count_remainder(grid):
+	"""
+	Finds how many non-zero items are left in a grid
+	"""
+	items_left = 0
+	for i in grid:
+		for j in i:
+			if j != 0:
+				items_left += 1
+	return items_left
+
 class pizzaTests(unittest.TestCase):
 
 	def test_get_multiples_set(self):
@@ -225,16 +293,18 @@ class pizzaTests(unittest.TestCase):
 		r_arr = insert_zeroes(arr, (1, 1), (3, 2))
 		self.assertEqual(r_arr, z_arr)
 
-	def test_find_min_ingredients(self):
+	def test_find_ingredients(self):
 		f_arr = [['a', 'b', 'c'],['a', 'g', 'f'],['a', 'a', 'b']]
-		self.assertEqual(find_min_ingredients(f_arr, 'a', 2), True)
+		self.assertEqual(find_ingredients(f_arr, 'a', 2), True)
 		g_arr = [['a', 'b', 'c'],['q', 'g', 'f'],['f', 'q', 'b']]
-		self.assertEqual(find_min_ingredients(g_arr, 'a', 2), False)
+		self.assertEqual(find_ingredients(g_arr, 'a', 2), False)
 		n_arr = [
 				 [1, 2, 3], 
 				 [4, 2, 6], 
 				 [5, 8, 9]]
-		self.assertEqual(find_min_ingredients(n_arr, 5, 1), True)
+		self.assertEqual(find_ingredients(n_arr, 5, 1), True)
+		b_arr = [[True, False], [False, False], [True, True]]
+		self.assertEqual(find_ingredients(b_arr, True, 2), True)
 
 	def test_cut_slice(self):
 		s_arr = [
@@ -242,25 +312,24 @@ class pizzaTests(unittest.TestCase):
 				 [4, 2, 6], 
 				 [5, 8, 9]]
 		r_arr = [
-				 [1, 2, 3],
-				 [4, 0, 0],
-				 [5, 0, 0]]
+				 [0, 2, 3],
+				 [0, 2, 6],
+				 [0, 8, 9]]
 		p_arr = [
-				 [2, 6],
-				 [8, 9]]
-		cursor, pizza, piece = cut_slice(s_arr, (1, 1), (2, 2), 2, 9, 1)
-		self.assertEqual(cursor, (1, 2))
+				 [1], [4], [5]]
+		cursor, pizza, piece = cut_slice(s_arr, (0, 0), (2, 0))
+		self.assertEqual(cursor, (0, 0))
 		self.assertEqual(pizza, r_arr)
 		self.assertEqual(p_arr, piece)
 
-		cursor, pizza, piece = cut_slice(s_arr, (2, 1), (3, 2), 6, 9, 1)
+		cursor, pizza, piece = cut_slice(s_arr, (2, 1), (3, 2))
 		self.assertEqual(cursor, (2, 1))
-		self.assertEqual(pizza, None)
-		self.assertEqual(piece, None)
+		self.assertEqual(pizza, [[]])
+		self.assertEqual(piece, [[]])
 
 	def test_has_zero(self):
 		z_arr = [
-				 [4, 6, 8],
+				 [0, 0, 8],
 				 [3, 4, 6],
 				 [1, 0, 8]]
 		p_arr = [
@@ -274,14 +343,43 @@ class pizzaTests(unittest.TestCase):
 		self.assertEqual(answer2, False)
 		self.assertEqual(location2, None)
 
-	#def test_randomized_cuts(self):
-	#	test_pizza = [
-	#		  [T, T, T, T, T],
-	#		  [T, M, M, M, T],
-	#		  [T, T, T, T, T],
-	#		  ]
-	#	cuts_set = get_multiples_set(6)
-	#	no_of_cuts, cuts_order = randomized_cuts(test_pizza, cuts_set, True, False, 1)
+	def test_count_remainder(self):
+		z_arr = [
+				 [0, 0, 8],
+				 [3, 4, 6],
+				 [1, 0, 8]]
+		p_arr = [
+				 [4, 6, 8],
+				 [3, 4, 6],
+				 [1, 9, 8]]
+		n_arr = [
+				 [0, 0, 0],
+				 [0, 0, 0],
+				 [0, 0, 0]]		 
+		z_left = count_remainder(z_arr)
+		p_left = count_remainder(p_arr)
+		n_left = count_remainder(n_arr)
+		self.assertEqual(z_left, 6)
+		self.assertEqual(p_left, 9)
+		self.assertEqual(n_left, 0)
+
+	def test_randomized_cuts(self):
+		test_pizza = [
+			  [T, T, T, T, T],
+			  [T, M, M, M, T],
+			  [T, T, T, T, T],
+			  ]
+		n = 6
+		cuts_set = get_multiples_set(n)
+		cuts_set.append((int(n/2), 1))
+		cuts_set.append((1, int(n/2)))
+		#cuts_set.append((int(n/3), 2))
+		#cuts_set.append((2, int(n/3)))
+		'''
+		no_of_cuts, cuts_order, un_cuts = randomized_cuts(test_pizza, cuts_set, T, M, 1)
+		print("No of cuts: {}".format(no_of_cuts))
+		print("Cuts order: {}".format(cuts_order))
+		print("Uncut items: {}".format(un_cuts))'''
 
 if __name__ == '__main__':
 	unittest.main()
