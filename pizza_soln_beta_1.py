@@ -25,19 +25,27 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 		y += "]"
 		print(y)
 	print("")
-	print("Please Wait.............")
+	print("  Please Wait.............")
 	#run_length specifies the number of times a randomized_cut sequence is run, limits the precision
-	run_length = 150
+	run_length = 100
 	cut_shapes = get_multiples_set(max_total)
 	unsorted_results = []
 	#Increase precision of cuts by including non-optimal slices
 	n = max_total
 	cut_shapes.append((int(n/2), 1))
 	cut_shapes.append((1, int(n/2)))
+	#Status bar effect
+	initial_bar = "#######################################################"
+	sys.stdout.write(" Status:   : %s\r" % initial_bar)
+	bar_piece = ">"
+	flush_bar = ""
+	tn = 1
 	for i in range(run_length):
-		level = i/run_length * 100
-		sys.stdout.write(" Status: %d%% \r" % level)
+		level = int(i/run_length * 100)
+		sys.stdout.write(" Status: %d%% : %s \r " % (level, flush_bar))
 		sys.stdout.flush()
+		if level % 2 == 0:
+			flush_bar += bar_piece
 		no_of_cuts, ordered_cuts, remainder = \
 		randomized_cuts(unsliced_pizza, cut_shapes, ingredient_a, ingredient_b, min_ingredients)
 		unsorted_results.append([no_of_cuts, ordered_cuts, remainder])	
@@ -61,9 +69,10 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 			min_cut = tc
 			optimum_cuts = i
 	print(" ")
-	print("Total Cuts: {}".format(optimum_cuts[0]))
+	print("")
+	print("Total Slices: {}".format(optimum_cuts[0]))
 	print("Unsliced remainder: {}".format(optimum_cuts[2]))
-	print("Optimal Cuts Order: {}".format(optimum_cuts[1]))
+	print("Coordinates of slices: {}".format(optimum_cuts[1]))
 
 def randomized_cuts(pizza, cuts_set, ingredient_a, ingredient_b, min_ingredients):
 	"""
@@ -319,5 +328,5 @@ if __name__ == '__main__':
 				  [T, M, T, M, M, M, T, M, M, M],
 				  [T, T, T, M, M, T, T, M, M, M],
 				  ]
-	#gen_pizza = test_generator((10, 10), ('T', 'M'))
-	optimal_cuts(test_pizza_3, 1, T, M, 6)
+	gen_pizza = test_generator((7, 6), ('T', 'M'))
+	optimal_cuts(gen_pizza, 1, T, M, 6)
