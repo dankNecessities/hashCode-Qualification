@@ -1,9 +1,9 @@
 """
 /* 
+ * Written in Python 3.6
  * A semi-optimized version, for uploading.
  * Commentary is heavily reduced.
  * Cursor output is limited
- * Written in Python 3.6
  * Tests run from external file
  */
 """
@@ -27,7 +27,7 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	print("")
 	print("Please Wait.............")
 	#run_length specifies the number of times a randomized_cut sequence is run, limits the precision
-	run_length = 50
+	run_length = 150
 	cut_shapes = get_multiples_set(max_total)
 	unsorted_results = []
 	#Increase precision of cuts by including non-optimal slices
@@ -61,7 +61,8 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 			min_cut = tc
 			optimum_cuts = i
 	print(" ")
-	print("Optimal Cuts: {}".format(optimum_cuts[0]))
+	print("Total Cuts: {}".format(optimum_cuts[0]))
+	print("Unsliced remainder: {}".format(optimum_cuts[2]))
 	print("Optimal Cuts Order: {}".format(optimum_cuts[1]))
 
 def randomized_cuts(pizza, cuts_set, ingredient_a, ingredient_b, min_ingredients):
@@ -318,5 +319,5 @@ if __name__ == '__main__':
 				  [T, M, T, M, M, M, T, M, M, M],
 				  [T, T, T, M, M, T, T, M, M, M],
 				  ]
-	#gen_pizza = test_generator((20, 20), ('T', 'M'))
-	optimal_cuts(test_pizza_2, 1, T, M, 6)
+	#gen_pizza = test_generator((10, 10), ('T', 'M'))
+	optimal_cuts(test_pizza_3, 1, T, M, 6)
