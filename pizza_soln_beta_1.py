@@ -2,6 +2,7 @@
 /* 
  * Written in Python 3.6
  * A semi-optimized version, for uploading.
+ * The maximum size for optimization is a 6x7 pizza grid
  * Commentary is heavily reduced.
  * Cursor output is limited
  * Tests run from external file
