@@ -19,7 +19,7 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	print("Pizza whose slicing is to optimized:")
 	print("")
 	for a in pizza:
-		y = "               [ "
+		y = "                             [ "
 		for b in a:
 			y += str(b)
 			y += " "
@@ -28,7 +28,7 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	print("")
 	print("  Please Wait.............")
 	#run_length specifies the number of times a randomized_cut sequence is run, limits the precision
-	run_length = 100
+	run_length = 400
 	cut_shapes = get_multiples_set(max_total)
 	unsorted_results = []
 	#Increase precision of cuts by including non-optimal slices
@@ -36,16 +36,16 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	cut_shapes.append((int(n/2), 1))
 	cut_shapes.append((1, int(n/2)))
 	#Status bar effect
-	initial_bar = "#######################################################"
+	initial_bar = "                                                    |"
 	sys.stdout.write(" Status:   : %s\r" % initial_bar)
-	bar_piece = ">"
+	bar_piece = "\x86"
 	flush_bar = ""
-	tn = 1
 	for i in range(run_length):
 		level = int(i/run_length * 100)
+		level += 1
 		sys.stdout.write(" Status: %d%% : %s \r " % (level, flush_bar))
 		sys.stdout.flush()
-		if level % 2 == 0:
+		if level % 8 == 0:
 			flush_bar += bar_piece
 		no_of_cuts, ordered_cuts, remainder = \
 		randomized_cuts(unsliced_pizza, cut_shapes, ingredient_a, ingredient_b, min_ingredients)
