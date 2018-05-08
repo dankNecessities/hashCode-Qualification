@@ -8,7 +8,7 @@
  * Tests run from external file
  */
 """
-import unittest, random, copy, sys
+import random, copy, sys
 
 def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	"""
@@ -28,7 +28,7 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	print("")
 	print("  Please Wait.............")
 	#run_length specifies the number of times a randomized_cut sequence is run, limits the precision
-	run_length = 400
+	run_length = 1000
 	cut_shapes = get_multiples_set(max_total)
 	unsorted_results = []
 	#Increase precision of cuts by including non-optimal slices
@@ -36,16 +36,16 @@ def optimal_cuts(pizza, min_ingredients, ingredient_a, ingredient_b, max_total):
 	cut_shapes.append((int(n/2), 1))
 	cut_shapes.append((1, int(n/2)))
 	#Status bar effect
-	initial_bar = "                                                    |"
-	sys.stdout.write(" Status:   : %s\r" % initial_bar)
-	bar_piece = "\x86"
-	flush_bar = ""
+	bar_length = 47
+	bar_piece = "\u2503"
+	flush_bar = " "
+	incr_bar = int(run_length / bar_length)
 	for i in range(run_length):
 		level = int(i/run_length * 100)
 		level += 1
 		sys.stdout.write(" Status: %d%% : %s \r " % (level, flush_bar))
 		sys.stdout.flush()
-		if level % 8 == 0:
+		if level % incr_bar  == 0:
 			flush_bar += bar_piece
 		no_of_cuts, ordered_cuts, remainder = \
 		randomized_cuts(unsliced_pizza, cut_shapes, ingredient_a, ingredient_b, min_ingredients)
@@ -330,4 +330,4 @@ if __name__ == '__main__':
 				  [T, T, T, M, M, T, T, M, M, M],
 				  ]
 	gen_pizza = test_generator((7, 6), ('T', 'M'))
-	optimal_cuts(gen_pizza, 1, T, M, 6)
+	optimal_cuts(test_pizza_3, 1, T, M, 6)
